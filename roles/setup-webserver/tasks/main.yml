@@ -1,0 +1,127 @@
+## Role to configure the webserver
+
+
+- name: Install web server
+  ansible.builtin.package:
+    name: httpd
+    state: present
+  become: true
+
+- name: Enable web server
+  ansible.builtin.service:
+    name: httpd
+    enabled: true
+  become: true
+
+- name: Add httpd service to filewall 
+  ansible.builtin.shell: firewall-cmd --permanent --add-service=http
+  become: true
+
+- name: Reload firewall
+  ansible.builtin.command: firewall-cmd --reload
+  become: true
+
+- name: Install tar
+  ansible.builtin.package:
+    name: tar
+    state: present
+  become: true
+
+## Download and setup openshift installer
+
+- name: Make directory /tmp/openshift
+  ansible.builtin.file:
+    path: /tmp/openshift
+    state: directory
+
+- name: Download OpenShift installer for declared version
+  ansible.builtin.get_url:
+    url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-install-linux.tar.gz
+    dest: /tmp/openshift/openshift-install-linux.tar.gz
+    mode: '0644'
+
+- name: Untar downloaded installer
+  ansible.builtin.unarchive:
+    src: /tmp/openshift/openshift-install-linux.tar.gz
+    dest: /tmp/openshift
+    remote_src: true
+
+- name: Move file to /usr/local/bin
+  ansible.builtin.copy:
+    src: /tmp/openshift-install
+    dest: /usr/local/bin/openshift-install
+    mode: '0755'
+    remote_src: true
+  become: true
+
+
+## Download and setup OpenShift client 
+- name: Download OpenShift client for declared version
+  ansible.builtin.get_url:
+    url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-client-linux.tar.gz
+    dest: /tmp/openshift/openshift-client-linux.tar.gz
+    mode: '0644'
+
+- name: Untar download client
+  ansible.builtin.unarchive:
+    src: /tmp/openshift/openshift-client-linux.tar.gz
+    dest: /tmp/openshift
+    remote_src: true
+
+- name: Move file to /usr/local
+  ansible.builtin.copy:
+    src: /tmp/oc
+    dest: /usr/local/bin/oc
+    mode: '0755'
+    remote_src: true
+  become: true
+
+## Remove temporary files 
+- name: Remove /tmp/openshift directory
+  ansible.builtin.file:
+    path: /tmp/openshift
+    state: absent
+
+## Download and setup OCI client
+
+## Download and setup OpenShift client 
+- name: Download oracle client installer
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh
+    dest: /tmp/install.sh
+    mode: '0755'
+
+- name: Install Oracle CLI Client
+  ansible.builtin.command: /tmp/install.sh --accept-all-defaults
+
+- name: Remove installer /tmp/install.sh
+  ansible.builtin.file:
+    path: /tmp/install.sh
+    state: absent
+
+## Create oci configuration
+- name: Create ~/.oci directory
+  ansible.builtin.file:
+    path: ~/.oci
+    state: directory
+
+- name: Create ~/.oci/config file 
+  ansible.builtin.copy:
+    dest: ~/.oci/config
+    content: |
+      user={{ oci_user_ocid }}
+      fingerprint={{ oci_config_fingerpint }} 
+      tenancy={{ oci_tenancy_ocid }}
+      region={{ oci_region }}
+      key_file=~/.oci/ocikey.pem 
+
+- name: Create ~/.oci/ocikey.pem
+  ansible.builtin.copy:
+    dest: ~/.oci/ocikey.pem
+    content: |
+      {{ oci_config_privatekey_pem }}
+
+
+
+
+
