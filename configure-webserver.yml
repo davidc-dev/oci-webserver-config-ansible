@@ -3,8 +3,7 @@
 - name: Playbook to configure webservesr
   hosts: webserver
   remote_user: opc
-  collections:
-    - oracle.oci
+
   roles:
- #   - setup-webserver
+    - setup-webserver
     - create-installer-image
