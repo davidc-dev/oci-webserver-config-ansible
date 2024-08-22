@@ -48,7 +48,7 @@
 
 - name: Move file to /usr/local/bin
   ansible.builtin.copy:
-    src: /tmp/openshift-install
+    src: /tmp/openshift/openshift-install
     dest: /usr/local/bin/openshift-install
     mode: '0755'
     remote_src: true
@@ -70,7 +70,7 @@
 
 - name: Move file to /usr/local
   ansible.builtin.copy:
-    src: /tmp/oc
+    src: /tmp/openshift/oc
     dest: /usr/local/bin/oc
     mode: '0755'
     remote_src: true
@@ -85,19 +85,27 @@
 ## Download and setup OCI client
 
 ## Download and setup OpenShift client 
+- name: check if already installed file exists
+  stat: 
+    path: ~/bin/oci
+  register: oci_exists
+
 - name: Download oracle client installer
   ansible.builtin.get_url:
     url: https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh
     dest: /tmp/install.sh
     mode: '0755'
+  when: oci_exists.stat.exists == False
 
 - name: Install Oracle CLI Client
   ansible.builtin.command: /tmp/install.sh --accept-all-defaults
+  when: oci_exists.stat.exists == False
 
 - name: Remove installer /tmp/install.sh
   ansible.builtin.file:
     path: /tmp/install.sh
     state: absent
+  when: oci_exists.stat.exists == False
 
 ## Create oci configuration
 - name: Create ~/.oci directory
@@ -108,7 +116,9 @@
 - name: Create ~/.oci/config file 
   ansible.builtin.copy:
     dest: ~/.oci/config
+    mode: 600
     content: |
+      [DEFAULT]
       user={{ oci_user_ocid }}
       fingerprint={{ oci_config_fingerpint }} 
       tenancy={{ oci_tenancy_ocid }}
@@ -118,10 +128,17 @@
 - name: Create ~/.oci/ocikey.pem
   ansible.builtin.copy:
     dest: ~/.oci/ocikey.pem
+    mode: 600
     content: |
       {{ oci_config_privatekey_pem }}
 
 
 
+## Install yq
+- name: Install yq binary 
+  ansible.builtin.get_url:
+    url: https://github.com/mikefarah/yq/releases/download/latest/yq_linux_amd64
+    dest: /usr/local/bin/yq
+    mode: '0755'
 
 
