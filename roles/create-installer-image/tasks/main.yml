@@ -1104,14 +1104,20 @@
     openshift-install agent create --dir ~/{{ cluster_name }} image
   when: ocp_image_exists.stat.exists == False
 
+## Check if rootfs exists in webserver directory
+- name: check if rootfs exists in webserver directory
+  stat: 
+    path: /var/www/html/agent.x86_64-rootfs.img
+  register: ocp_rootfs_exists
+
 ## Copy rootfs to web server serving directory
 - name: copy rootfs image to webserver directory
   ansible.builtin.copy:
-    src: ~/{{ cluster_name }}/boot-artifacts/agent.x86_64-rootfs.img
+    src: /home/opc/{{ cluster_name }}/boot-artifacts/agent.x86_64-rootfs.img
     dest: /var/www/html/agent.x86_64-rootfs.img
     remote_src: yes
   become: true
-  when: ocp_image_exists.stat.exists == False
+  when: ocp_rootfs_exists.stat.exists == False
 
 ##  Copy installer image to Oracle Blob bucket
 - name: Copy ocp installer iso to Oracle Blob bucket
