@@ -136,7 +136,7 @@
     content: |
       [DEFAULT]
       user={{ oci_user_ocid }}
-      fingerprint={{ oci_config_fingerpint }} 
+      fingerprint={{ oci_config_fingerprint }} 
       tenancy={{ oci_tenancy_ocid }}
       region={{ oci_region }}
       key_file=~/.oci/ocikey.pem 
