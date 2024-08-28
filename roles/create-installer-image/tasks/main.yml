@@ -1123,4 +1123,4 @@
 - name: Copy ocp installer iso to Oracle Blob bucket
   ansible.builtin.shell: |
     oci os object put --bucket-name {{ oci_bucket_name }} --file ~/{{ cluster_name }}/agent.x86_64.iso  
-  when: ocp_image_exists.stat.exists == True
+  when: ocp_image_exists.stat.exists == False
